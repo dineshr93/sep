@@ -1,6 +1,7 @@
 package main
 
 // set GOOS=linux
+// set GOOS=windows
 // set GOARCH=amd64 go build
 import (
 	"bufio"
@@ -23,25 +24,11 @@ func main() {
 		// do something with command
 	} else {
 		fmt.Println("Please provide folder to process, as an argument")
-		os.Exit(3)
+		os.Exit(1)
 	}
 	fmt.Println(folderPath)
 
 	// file handle for proprietary file
-	f, err := os.Open(ossFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// remember to close the file at the end of the program
-	defer f.Close()
-
-	// file handle for proprietary file
-	p, err := os.Open(propFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// remember to close the file at the end of the program
-	defer p.Close()
 
 	// present working directory
 	// mydir, err := os.Getwd()
@@ -49,28 +36,25 @@ func main() {
 	// 	fmt.Println(err)
 	// }
 
-	fullpropDir := folderPath + string(os.PathSeparator) + propDir
-	fullossDir := folderPath + string(os.PathSeparator) + ossDir
-	if _, err := os.Stat(fullpropDir); os.IsNotExist(err) {
-		fmt.Println("Creating proprietary directory")
-		err = os.Mkdir(fullpropDir, 0755)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	if _, err := os.Stat(fullossDir); os.IsNotExist(err) {
-		fmt.Println("Creating oss directory")
-		err = os.Mkdir(fullossDir, 0755)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	// read the file line by line using scanner
-	scanner1 := bufio.NewScanner(f)
-	wg.Add(1)
+	wg.Add(2)
 	go func() {
 		defer wg.Done()
+		fullossDir := folderPath + string(os.PathSeparator) + ossDir
+		if _, err := os.Stat(fullossDir); os.IsNotExist(err) {
+			fmt.Println("Creating oss directory")
+			err = os.Mkdir(fullossDir, 0755)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		f, err := os.Open(ossFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// remember to close the file at the end of the program
+		defer f.Close()
+		// read the file line by line using scanner
+		scanner1 := bufio.NewScanner(f)
 		for scanner1.Scan() {
 			if scanner1.Text() != "" {
 				fmt.Printf("%s\n", scanner1.Text())
@@ -87,10 +71,25 @@ func main() {
 		}
 	}()
 
-	scanner := bufio.NewScanner(p)
-	wg.Add(1)
+	// wg.Add(1)
 	go func() {
 		defer wg.Done()
+		// file handle for proprietary file
+		p, err := os.Open(propFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// remember to close the file at the end of the program
+		defer p.Close()
+		fullpropDir := folderPath + string(os.PathSeparator) + propDir
+		if _, err := os.Stat(fullpropDir); os.IsNotExist(err) {
+			fmt.Println("Creating proprietary directory")
+			err = os.Mkdir(fullpropDir, 0755)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		scanner := bufio.NewScanner(p)
 		for scanner.Scan() {
 			if scanner.Text() != "" {
 				fmt.Printf("%s\n", scanner.Text())
@@ -102,13 +101,9 @@ func main() {
 				}
 			}
 		}
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
 	}()
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-	if err := scanner1.Err(); err != nil {
-		log.Fatal(err)
-	}
 	wg.Wait()
 }
