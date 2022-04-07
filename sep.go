@@ -6,13 +6,16 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"sync"
 )
 
 func main() {
 	var wg sync.WaitGroup
+	jsonDir := "jsonFiles"
 	ossDir := "oss"
 	ossFile := "oss.txt"
 	propDir := "prop"
@@ -36,7 +39,7 @@ func main() {
 	// 	fmt.Println(err)
 	// }
 
-	wg.Add(2)
+	wg.Add(3)
 	go func() {
 		defer wg.Done()
 		fullossDir := folderPath + string(os.PathSeparator) + ossDir
@@ -71,7 +74,6 @@ func main() {
 		}
 	}()
 
-	// wg.Add(1)
 	go func() {
 		defer wg.Done()
 		// file handle for proprietary file
@@ -103,6 +105,38 @@ func main() {
 		}
 		if err := scanner.Err(); err != nil {
 			log.Fatal(err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		fulljsonDir := folderPath + string(os.PathSeparator) + jsonDir
+		if _, err := os.Stat(fulljsonDir); os.IsNotExist(err) {
+			fmt.Println("Creating json directory")
+			err = os.Mkdir(fulljsonDir, 0755)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		dir, err := ioutil.ReadDir(folderPath)
+		if err != nil {
+			msg := fmt.Sprintf("An error occured reading the %v directory.\n%s", folderPath, err)
+			fmt.Println(msg)
+			os.Exit(1)
+		}
+		for _, file := range dir {
+			if !file.IsDir() {
+				fileName := file.Name()
+				oldLocation := folderPath + string(os.PathSeparator) + fileName
+				newLocation := fulljsonDir + string(os.PathSeparator) + fileName
+				isJsonFile := strings.Contains(fileName, ".json")
+				if isJsonFile {
+					err := os.Rename(oldLocation, newLocation)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+			}
 		}
 	}()
 	wg.Wait()
