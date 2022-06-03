@@ -59,13 +59,22 @@ func main() {
 		// read the file line by line using scanner
 		scanner1 := bufio.NewScanner(f)
 		for scanner1.Scan() {
-			if scanner1.Text() != "" {
-				fmt.Printf("%s\n", scanner1.Text())
-				oldLocation := folderPath + string(os.PathSeparator) + scanner1.Text()
-				newLocation := fullossDir + string(os.PathSeparator) + scanner1.Text()
-				err := os.Rename(oldLocation, newLocation)
-				if err != nil {
-					log.Fatal(err)
+			if fileName1 := scanner1.Text(); fileName1 != "" {
+				// fmt.Printf("%s\n", scanner1.Text())
+				oldLocation := folderPath + string(os.PathSeparator) + fileName1
+				newLocation := fullossDir + string(os.PathSeparator) + fileName1
+				_, err := os.Stat(newLocation)
+				_, err1 := os.Stat(oldLocation)
+				if os.IsNotExist(err) && !os.IsNotExist(err1) {
+					err := os.Rename(oldLocation, newLocation)
+					if err != nil {
+						log.Fatal(err)
+					}
+					if err1 != nil {
+						log.Fatal(err1)
+					}
+				} else {
+					// fmt.Println(strings.Repeat("=", 10), "File", fileName1, "exist in", fullossDir, strings.Repeat("=", 10))
 				}
 			}
 		}
@@ -93,13 +102,23 @@ func main() {
 		}
 		scanner := bufio.NewScanner(p)
 		for scanner.Scan() {
-			if scanner.Text() != "" {
-				fmt.Printf("%s\n", scanner.Text())
-				oldLocation := folderPath + string(os.PathSeparator) + scanner.Text()
-				newLocation := fullpropDir + string(os.PathSeparator) + scanner.Text()
-				err := os.Rename(oldLocation, newLocation)
-				if err != nil {
-					log.Fatal(err)
+			if fileName2 := scanner.Text(); fileName2 != "" {
+				// fmt.Printf("%s\n", scanner.Text())
+				oldLocation := folderPath + string(os.PathSeparator) + fileName2
+				newLocation := fullpropDir + string(os.PathSeparator) + fileName2
+				_, err := os.Stat(newLocation)
+				_, err1 := os.Stat(oldLocation)
+				fmt.Println(fileName2,"======",os.IsNotExist(err),os.IsNotExist(err1))
+				if os.IsNotExist(err) && !os.IsNotExist(err1) {
+					err := os.Rename(oldLocation, newLocation)
+					if err != nil {
+						log.Fatal(err)
+					}
+					if err1 != nil {
+						log.Fatal(err1)
+					}
+				} else {
+					// fmt.Println(strings.Repeat("=", 10), "File", fileName2, "exist in", fullpropDir, strings.Repeat("=", 10))
 				}
 			}
 		}
@@ -126,15 +145,24 @@ func main() {
 		}
 		for _, file := range dir {
 			if !file.IsDir() {
-				fileName := file.Name()
-				oldLocation := folderPath + string(os.PathSeparator) + fileName
-				newLocation := fulljsonDir + string(os.PathSeparator) + fileName
-				isJsonFile := strings.Contains(fileName, ".json")
-				if isJsonFile {
-					err := os.Rename(oldLocation, newLocation)
-					if err != nil {
-						log.Fatal(err)
-					}
+				jsonFileName := file.Name()
+				oldLocation := folderPath + string(os.PathSeparator) + jsonFileName
+				newLocation := fulljsonDir + string(os.PathSeparator) + jsonFileName
+				isJsonFile := strings.Contains(jsonFileName, ".json")
+				_, err := os.Stat(newLocation)
+				_, err1 := os.Stat(oldLocation)
+				if os.IsNotExist(err) && !os.IsNotExist(err1) {
+					if isJsonFile {
+						err := os.Rename(oldLocation, newLocation)
+						if err != nil {
+							log.Fatal(err)
+						}
+						if err1 != nil {
+							log.Fatal(err1)
+						}
+					} 
+				}else {
+					// fmt.Println(strings.Repeat("=", 10), "File", jsonFileName, "exist in", fulljsonDir, strings.Repeat("=", 10))
 				}
 			}
 		}
